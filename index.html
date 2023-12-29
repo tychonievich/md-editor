@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Markdown editor</title>
+        <script src="markdown-it.min.js"></script>
+        <script src="katex.min.js"></script>
+        <link rel="stylesheet" href="katex.min.css">
+        <script src="markdown-it-sub.min.js"></script>
+        <script src="markdown-it-sup.min.js"></script>
+        <script src="markdown-it-footnote.min.js"></script>
+        <script src="markdown-it-deflist.min.js"></script>
+        <script src="markdown-it-div.min.js"></script>
+        <script src="texmath.min.js"></script>
+        <script src="split.min.js"></script>
+        <script src="codemirror.js"></script>
+        <script src="js-yaml.min.js"></script>
+        <style>
+body { margin: 0; border: 0; padding: 0; }
+#pane2 { padding: 1ex; }
+
+/* Split */
+.split {
+    display: flex;
+    flex-direction: row;
+}
+.gutter {
+    background-color: #eee;
+    background-repeat: no-repeat;
+    background-position: 50%;
+}
+.gutter.gutter-horizontal {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+    cursor: col-resize;
+}
+
+
+/* texmath */
+eq { display: inline-block; }
+eqn { display: block}
+span.eqno {
+    display: flex;
+    flex-direction: row;
+    align-content: space-between;
+    align-items: center;
+}
+span.eqno > eqn {
+    width: 100%;
+    margin-left: 3em;
+}
+span.eqno > span {
+    width:3em;
+    text-align:right;
+}
+
+/* section numbers */
+h1::before { counter-increment: h1; content: counter(h1) ". "; opacity: 0.5; }
+h2::before { counter-increment: h2; content: counter(h1) "." counter(h2) ". "; opacity: 0.5; }
+h3::before { counter-increment: h3; content: counter(h1) "." counter(h2) "." counter(h3) ". "; opacity: 0.5; }
+body { counter-reset: h1; }
+h1 { font-size:1.5rem; counter-reset: h2; }
+h2 { font-size:1.2rem; counter-reset: h3; }
+h3 { font-size:1.1rem; }
+h4,h5,h6 { font-size: 1rem; }
+
+        </style>
+        <script>
+
+const md = window.markdownit({
+    html:true,
+    breaks:false,
+    typographer:true,
+    quotes:"“”‘’",
+    langPrefix:'language-',
+})
+md.use(window.markdownitSub)
+md.use(window.markdownitSup)
+md.use(window.markdownitFootnote)
+md.use(window.markdownitDeflist)
+md.use(window.markdownitDiv)
+md.use(texmath.use(katex),{delimiters:'dollars'})
+
+md.core.ruler.push('line', state => {
+  state.tokens.map(token => {
+    if (token.map) {
+      let [start, end] = token.map
+      token.attrSet('data-line', start)
+    }
+    return token
+  })
+  return state
+})
+
+window.editor_text = localStorage.getItem("text") || ''
+window.editor_history = JSON.parse(localStorage.getItem("history") || '[]')
+
+        </script>
+    </head>
+    <body class="split"><div id="pane1">
+<textarea></textarea>
+    </div><div id="pane2" style="height: calc(100vh - 2ex); overflow-y: auto;"></div></body>
+<input type="file" id="filePicker" accept="text/*" style="display:none"/>
+<input type="button" value="save" onclick="saveAsFile()" style="position:fixed; right:0; bottom:2em; height:2em"/>
+<input type="button" value="load" onclick="loadFromFile()" style="position:fixed; right:0; bottom:0em; height:2em"/>
+</html>
+<script>
+
+function rendermd(text) {
+    const yamlre = /^\s*---[\n\r].*?[\n\r][.][.][.][\n\r]/s;
+    const yaml = yamlre.exec(text);
+    if (yaml) {
+        try {
+            const doc  = jsyaml.load(yaml[0])
+            if (doc.title) document.title = doc.title
+            else document.title = 'markdown'
+            if (doc.filename) document.filename = doc.filename
+            else document.filename = undefined
+            return md.render(window.editor_text.substr(yaml[0].length))
+        } catch {}
+    }
+    document.title = 'markdown'
+    return md.render(window.editor_text)
+}
+
+
+Split(["#pane1", "#pane2"])
+
+
+document.getElementById('pane2').innerHTML = rendermd(editor_text)
+document.getElementById('filePicker').addEventListener('change',fileSelected,'false')
+function fileSelected() {
+    if (this.files.length != 1) return
+    this.files[0].text().then(txt => {
+        window.editor_text = txt
+        window.editor_history = []
+        view.dispatch({changes:{from:0,to:view.state.doc.length,insert:txt}})
+    })
+}
+
+const loadFromFile = () => {
+    document.getElementById('filePicker').click()
+}
+const saveAsFile = () => {
+    var blob = new Blob([view.state.doc.toString()], {type:'text/markdown'})
+    var a = document.createElement('a')
+    var ex;
+    if (document.filename) ex = document.filename
+    else if (document.title == 'markdown')
+        ex = "markdown-"+new Date().toISOString().replace(/[.].*|[^0-9]/g,'')+".md"
+    else
+        ex = document.title.replace(/['’‘"“”]/g,'').replace(/[^A-Za-z0-9_]+/g,'-').toLowerCase()+".md"
+    var name = prompt("Save as what file name?", ex)
+    if (!name) return
+    a.setAttribute('download', name)
+    a.setAttribute('target', '_blank')
+    a.href = URL.createObjectURL(blob)
+    document.body.append(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(a.href)
+}
+
+async function md2html() {
+    localStorage.setItem('text', window.editor_text)
+    localStorage.setItem('history', JSON.stringify(window.editor_history))
+    let got = rendermd(window.editor_text)
+    document.getElementById('pane2').innerHTML = got
+}
+
+function contentChanged(update) {
+    // arg is a https://codemirror.net/docs/ref/#view.ViewUpdate
+    if (!update.docChanged) return
+    let chg = update.changedRanges.map(o => [
+        o.fromA, update.startState.doc.slice(o.fromA,o.toA).text?.join(''),
+        o.fromB, update.state.doc.slice(o.fromB,o.toB).text?.join(''),
+    ])
+    window.editor_history.push({t:new Date().getTime(), c:chg})
+    window.editor_text = update.state.doc.toString()
+    md2html()
+    scrollS2R(null, view.state.selection.main.to)
+}
+
+const fixedHeight = CM["@codemirror/view"].EditorView.theme({
+    "&": {height: "100vh"},
+    ".cm-scroller": {overflow: "auto", fontSize: '.8rem'},
+})
+const initialState = CM["@codemirror/state"].EditorState.create({
+    doc: editor_text,
+    extensions: [
+        CM.codemirror.basicSetup,
+        CM["@codemirror/lang-markdown"].markdown(),
+        CM["@codemirror/view"].EditorView.lineWrapping,
+        fixedHeight,
+        CM["@codemirror/view"].EditorView.updateListener.of(contentChanged),
+        CM["@codemirror/view"].keymap.of([CM["@codemirror/commands"].indentWithTab]),
+        CM.codemirror.EditorView.contentAttributes.of({spellcheck:"true"}),
+    ],
+})
+document.getElementById('pane1').innerHTML = ''
+let view = new CM.codemirror.EditorView({
+    parent:document.getElementById('pane1'),
+    state: initialState,
+    lineWrapping: true
+})
+
+
+/// Scroll from rendered position to source position
+const scrollR2S = (evt) => {
+    let elem = evt.target;
+    while (elem && !elem.hasAttribute('data-line')) elem = elem.parentNode;
+    if (!elem) return;
+    evt.preventDefault()
+    tmp = elem.getAttribute('data-line')
+    if (tmp) {
+        num = Number(tmp)
+        let pos = view.state.doc.line(num+1).from
+        elem = view.domAtPos(pos).node
+        if (elem) elem.scrollIntoView()
+        view.dispatch({selection:{anchor:pos}}) 
+        evt.stopPropagation()
+    }
+}
+
+const scrollS2R = (evt, knownPos) => {
+    let pos = knownPos || view.posAtCoords({x:evt.clientX, y:evt.clientY})
+    let line = view.state.doc.lineAt(pos).number
+
+    line -= 1
+    let root = document.getElementById('pane2')
+    let rendered = document.querySelector(`[data-line="${line}"]`)
+    while (!rendered && line > 0) {
+        line -= 1
+        rendered = document.querySelector(`[data-line="${line}"]`)
+    }
+    if (rendered) {
+        rendered.scrollIntoView({block:'nearest',inline:'nearest'})
+        if (!knownPos) {
+            rendered.style.backgroundColor = 'rgba(255,255,0,0.25)'
+            setTimeout(()=>{
+                rendered.style.backgroundColor = ''
+            }, 1000)
+        }
+    }
+}
+
+
+document.getElementById('pane2').addEventListener('dblclick', scrollR2S)
+view.contentDOM.addEventListener('dblclick', scrollS2R)
+
+</script>
