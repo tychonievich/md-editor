@@ -69,6 +69,82 @@ h4,h5,h6 { font-size: 1rem; }
     font-family: Palatino, Palladio URW, P052, TeX Gyre Pagella, Palatino Linotype, Book Antiqua, serif;
     line-height: 130%;
 }
+
+
+/* Some of my preferred environments */
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre,code { background: rgba(0,0,0,0.04); border: 0.125ex solid rgba(0,0,0,0.12); border-radius: 0.5ex; hyphens:none; }
+pre > code { border: none; background:none; white-space: pre; }
+pre { display:table; }
+
+blockquote {
+  margin: 1em 0 1em 0.4em;
+  padding-left: 0.4em;
+  border-left: 0.2em solid rgba(0,0,0,0.25);
+}
+
+dd { margin-left: 1em; }
+dt { font-weight: bold; }
+dd+dt { margin-top: 1ex; }
+
+ol,ul { margin-top: 0.5ex; margin-bottom: 0.5ex; }
+ol,ul { padding-left: 1.5em; }
+li + li { margin-top: 0.5ex; }
+
+table {
+  border-collapse: collapse;
+  margin: .5em auto;
+  border-top: medium solid black;
+  border-bottom: medium solid black;
+}
+td,th { padding: 0.5ex 1ex; }
+thead th { border-bottom: thin solid black; }
+tbody tr:nth-child(2n+1) { background: rgba(0,0,0,0.0625); }
+
+
+figure { counter-increment: fig; margin: 1ex; padding: 1ex; }
+figure > * { display: table; margin: auto; }
+figure > * + * { margin-top: 1em; }
+figcaption:before { content: "Figure " counter(fig) ". "; font-weight: bold; }
+figcaption { text-align: left; font-style: italic; }
+
+
+.example {
+    margin: 1em;
+    background: #e9fbe9;
+    border-left: #99f solid 0.5ex;
+    padding: 0.5em 1em;
+}
+.example blockquote {
+    border: none;
+    padding: 0;
+    background: inherit;
+}
+.example > :first-child:before {
+    content: "Example \2014\00A0 ";
+    font-style: italic;
+    color: #005A9C;
+}
+
+.aside, .note, .tldr {
+    margin: 1em;
+    background: rgba(0,0,0,0.0625);
+    border-left: rgba(0,0,0,0.1225) solid 0.5ex;
+    padding: 0.5em 1em;
+}
+.aside:not(details) > :first-child:before, details.aside summary:before {
+    content: "Aside \2014\00A0 ";
+    font-style: italic;
+}
+.note > :first-child:before {
+    content: "Note \2014\00A0 ";
+    font-style: italic;
+}
+
+
         </style>
         <script>
 

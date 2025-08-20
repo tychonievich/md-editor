@@ -18,6 +18,7 @@ curl -O 'https://cdn.jsdelivr.net/npm/markdown-it-footnote/dist/markdown-it-foot
 curl -O 'https://cdn.jsdelivr.net/npm/markdown-it-sub/dist/markdown-it-sub.min.js' # tested 2.0.0
 curl -O 'https://cdn.jsdelivr.net/npm/markdown-it-sup/dist/markdown-it-sup.min.js' # tested 2.0.0
 curl -O 'https://cdn.jsdelivr.net/npm/markdown-it-texmath/texmath.min.js' # tested 1.0.0
+curl -O 'https://cdn.jsdelivr.net/npm/markdown-it-attrs/markdown-it-attrs.browser.min.js' # tested 4.1.6
 
 # Split-plane view
 curl -O 'https://cdn.jsdelivr.net/npm/split.js/dist/split.min.js' # tested 1.6.5
